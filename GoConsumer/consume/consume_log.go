@@ -1,9 +1,7 @@
 package consume
 
 import (
-	"bytes"
 	"log"
-	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -24,27 +22,41 @@ func connectToRabbitMQServer(connection *amqp.Connection) {
 }
 
 func consumeMessage(channel *amqp.Channel) {
+
+	err := channel.ExchangeDeclare(
+		"logs",   // name
+		"fanout", // type
+		true,     // durable
+		false,    // auto-deleted
+		false,    // internal
+		false,    // no-wait
+		nil,      // arguments
+	)
+	failOnError(err, "Failed to declare a Exchange")
+
 	q, err := channel.QueueDeclare(
-		"task_queue", // name
-		true,         // durable
-		false,        // delete when unused
-		false,        // exclusive
-		false,        // no-wait
-		nil,          // arguments
+		"",    // name
+		false, // durable
+		false, // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
-	err = channel.Qos(
-		1,     // prefetch count
-		0,     // prefetch size
-		false, // global
+	err = channel.QueueBind(
+		q.Name, // queue name
+		"",     // routing key
+		"logs", // exchange
+		false,
+		nil,
 	)
-	failOnError(err, "Failed to set QoS")
+	failOnError(err, "Failed to bind a queue")
 
 	msgs, err := channel.Consume(
 		q.Name, // queue
 		"",     // consumer
-		false,  // auto-ack
+		true,   // auto-ack
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait
@@ -56,12 +68,7 @@ func consumeMessage(channel *amqp.Channel) {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-			dotCount := bytes.Count(d.Body, []byte("."))
-			t := time.Duration(dotCount)
-			time.Sleep((t * time.Second))
-			log.Printf("Done")
-			d.Ack(false)
+			log.Printf(" [x] %s", d.Body)
 		}
 	}()
 
