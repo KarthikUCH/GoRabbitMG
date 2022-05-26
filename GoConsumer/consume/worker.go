@@ -34,6 +34,13 @@ func consumeMessage(channel *amqp.Channel) {
 	)
 	failOnError(err, "Failed to declare a queue")
 
+	err = channel.Qos(
+		1,     // prefetch count
+		0,     // prefetch size
+		false, // global
+	)
+	failOnError(err, "Failed to set QoS")
+
 	msgs, err := channel.Consume(
 		q.Name, // queue
 		"",     // consumer
