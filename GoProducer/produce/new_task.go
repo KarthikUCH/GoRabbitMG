@@ -26,12 +26,12 @@ func connectToRabbitMQServer(connection *amqp.Connection) {
 
 func sendMessage(channel *amqp.Channel) {
 	q, err := channel.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		"task_queue", // name
+		true,         // durable
+		false,        // delete when unused
+		false,        // exclusive
+		false,        // no-wait
+		nil,          // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
@@ -42,8 +42,9 @@ func sendMessage(channel *amqp.Channel) {
 		false,  // mandatory
 		false,  // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(body),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(body),
 		})
 	failOnError(err, "Failed to publish a message")
 }

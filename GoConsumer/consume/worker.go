@@ -25,12 +25,12 @@ func connectToRabbitMQServer(connection *amqp.Connection) {
 
 func consumeMessage(channel *amqp.Channel) {
 	q, err := channel.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
+		"task_queue", // name
+		true,         // durable
+		false,        // delete when unused
+		false,        // exclusive
+		false,        // no-wait
+		nil,          // arguments
 	)
 	failOnError(err, "Failed to declare a queue")
 
